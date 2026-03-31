@@ -7,7 +7,8 @@ We first retrieve relevant posts using information retrieval (IR) models, and th
 
 ## Pipeline
 data acquisition  
-→ preprocessing  
+→ preprocessing
+→ inverted index
 → retrieval (TF-IDF, BM25, QL)  
 → top-k documents  
 → retrieval evaluation (Precision@k, MAP)  
@@ -19,9 +20,10 @@ data acquisition
 The milestone focuses on the early stages of the full pipeline, including data acquisition, preprocessing, and a baseline sentiment analysis component.
 
 ### Current implementation
-labeled social media text  
-→ preprocessing  
-→ TF-IDF representation  
-→ Logistic Regression model  
-→ sentiment prediction  
-→ evaluation (Accuracy, F1)
+data acquisition (Kaggle Twitter Dataset)
+→ preprocessing
+→ inverted index
+→ retrieval (TF-IDF)  
+→ retrieval evaluation (Precision@k, AP, MAP) with a heuristic relevance rule  
+→ sentiment analysis (TF-IDF + Logistic Regression)  
+→ sentiment evaluation (Accuracy, F1)
