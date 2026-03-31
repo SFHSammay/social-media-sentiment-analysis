@@ -209,6 +209,9 @@ __marimo__/
 # Data
 data/
 
+# Report
+*.csv
+
 # Python cache
 __pycache__/
 
