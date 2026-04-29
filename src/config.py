@@ -54,3 +54,9 @@ QUERIES = [
     "apple iphone battery",
     "netflix recommendations"
 ]
+
+# LLM API Settings
+GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY", None)
+GEMMA_MODEL = "gemma-4-31b-it"
+GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
+MAX_RETRIES = 6
