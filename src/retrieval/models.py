@@ -1,6 +1,6 @@
 import math
 from src.retrieval.indexer import InvertedIndex
-from src.config import BM25_K1, BM25_B, QL_MU
+from src.config import BM25_K1, BM25_B, QL_MU, QL_JM_LAMBDA
 
 class TFIDFScorer:
     """Scores documents against a query using TF-IDF"""
@@ -51,7 +51,7 @@ class BM25Scorer:
         return sorted(candidates.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
 
-class QLScorer:
+class QLDPScorer:
     def __init__(self, index: InvertedIndex):
         self.index = index
         self.mu = QL_MU
@@ -82,4 +82,39 @@ class QLScorer:
                 
             candidates[doc_id] = score
             
+        return sorted(candidates.items(), key=lambda x: x[1], reverse=True)[:top_k]
+
+
+class QLJMScorer:
+    def __init__(self, index: InvertedIndex):
+        self.index = index
+        self.lmbda = QL_JM_LAMBDA
+
+    def rank(self, query_tokens: list[str], top_k: int = 10) -> list[tuple[int, float]]:
+        candidates: dict[int, float] = {}
+
+        candidate_docs = set()
+        for term in query_tokens:
+            candidate_docs.update(self.index.index.get(term, {}).keys())
+
+        for doc_id in candidate_docs:
+            score = 0.0
+            doc_len = self.index.doc_lengths[doc_id]
+
+            for term in query_tokens:
+                tf = self.index.index.get(term, {}).get(doc_id, 0)
+                cf = self.index.term_cf.get(term, 0)
+
+                if cf == 0 or doc_len == 0:
+                    continue
+
+                p_ml = tf / doc_len
+                p_wc = cf / self.index.collection_length
+                p_wd = (1 - self.lmbda) * p_ml + self.lmbda * p_wc
+
+                if p_wd > 0:
+                    score += math.log(p_wd)
+
+            candidates[doc_id] = score
+
         return sorted(candidates.items(), key=lambda x: x[1], reverse=True)[:top_k]

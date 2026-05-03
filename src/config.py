@@ -62,6 +62,9 @@ BM25_B  = 0.75
 # Query Likelihood Settings (Dirichlet Smoothing)
 QL_MU = 1000
 
+# Query Likelihood Settings (Jelinek-Mercer Smoothing)
+QL_JM_LAMBDA = 0.2
+
 # LLM API Settings
 GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY", None)
 GEMMA_MODEL = "gemma-4-31b-it"

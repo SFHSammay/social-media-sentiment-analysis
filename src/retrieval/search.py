@@ -1,6 +1,6 @@
 from src.preprocess import clean_text
 from src.retrieval.indexer import InvertedIndex
-from src.retrieval.models import TFIDFScorer, BM25Scorer, QLScorer
+from src.retrieval.models import TFIDFScorer, BM25Scorer, QLDPScorer, QLJMScorer
 from src.config import TOP_K
 
 class SearchEngine:
@@ -10,8 +10,10 @@ class SearchEngine:
 
         if self.model == "bm25":
             self.scorer = BM25Scorer(index)
-        elif self.model == "ql":
-            self.scorer = QLScorer(index)
+        elif self.model == "ql_dp":
+            self.scorer = QLDPScorer(index)
+        elif self.model == "ql_jm":
+            self.scorer = QLJMScorer(index)
         else:
             self.scorer = TFIDFScorer(index)
 

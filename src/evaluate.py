@@ -86,7 +86,6 @@ def evaluate_sentiment(y_true: list[int], y_pred: list[int]) -> dict:
     report = classification_report(y_true, y_pred, labels=LABELS, zero_division=0)
     return {"accuracy": round(acc, 4), "f1": round(f1, 4), "report": report}
 
-
 def summarize_ir(results: dict) -> dict:
     per_query = results["per_query"]
     if not per_query:
