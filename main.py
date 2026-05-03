@@ -1,27 +1,29 @@
 import csv
-from src.config import REPORT_FILE, TOP_K, QUERIES
-from src.preprocess import get_train_df, get_val_df
+
 import src.retrieval.indexer as indexer
-from src.retrieval.search import SearchEngine
-from src.sentiment.vectorizer import TFIDFFeaturizer, Word2VecFeaturizer
-from src.sentiment.classifier import SentimentClassifier
-from src.evaluate import evaluate_ir, evaluate_sentiment
+from src.config import QUERIES, REPORT_FILE, TOP_K
+from src.evaluate import evaluate_ir, evaluate_sentiment, summarize_ir
+from src.preprocess import get_train_df, get_val_df
 from src.retrieval.background import label_all
+from src.retrieval.search import SearchEngine
+from src.sentiment.classifier import SentimentClassifier
+from src.sentiment.vectorizer import TFIDFFeaturizer, Word2VecFeaturizer
+
 
 def main():
     # Load Data
     print("\nLoading and preprocessing data...")
     train_df = get_train_df()
-    val_df   = get_val_df()
+    val_df = get_val_df()
     print(f"Train: {len(train_df)} rows | Val: {len(val_df)} rows")
 
-    # Build Inverted Index on Training Set 
+    # Build Inverted Index on Training Set
     print("\nBuilding inverted index...")
     index = indexer.InvertedIndex()
     index.build(train_df)
     engine = SearchEngine(index, model="bm25")
 
-    # User Query 
+    # User Query
     user_query = input("\nEnter a search query (or 'exit' to quit): ")
     if user_query.lower() != "exit":
         retrieved_results = engine.search(user_query, top_k=TOP_K)
@@ -43,7 +45,6 @@ def main():
 
         print("Ground Truth Labels:")
         print(ground_truth)
-      
 
     # IR Evaluation on Validation Set
     print(f"\nRunning IR evaluation (P@{TOP_K}, MAP)...")
@@ -56,10 +57,10 @@ def main():
     print(f"MAP = {ir_results['MAP']}")
     for row in ir_results["per_query"][:]:
         print(f"{row['query']:35s} P@{TOP_K}={row['P@K']:.4f}  AP={row['AP']:.4f}")
-    
+
     ir_models = ["tfidf", "bm25", "ql"]
     all_ir_results = {}
-    
+
     print(f"\nRunning IR evaluation (P@{TOP_K}, MAP)...")
     for model_name in ir_models:
         # We pass the dynamic model name into the engine
@@ -68,11 +69,11 @@ def main():
         all_ir_results[model_name] = results
         print(f"Model: {model_name.upper():6s} | MAP: {results['MAP']:.4f}")
 
-    # Sentiment: Train on training set, evaluate on validation set 
+    # Sentiment: Train on training set, evaluate on validation set
     print("\nTraining sentiment classifier (TF-IDF + Logistic Regression)...")
     featurizer = TFIDFFeaturizer()
     X_train = featurizer.fit_transform(train_df["clean_text"].tolist())
-    X_val   = featurizer.transform(val_df["clean_text"].tolist())
+    X_val = featurizer.transform(val_df["clean_text"].tolist())
 
     clf = SentimentClassifier()
     clf.fit(X_train, train_df["label"].tolist())
@@ -86,22 +87,19 @@ def main():
     print("\nClassification Report:")
     print(sent_results["report"])
 
-    featurizers = {
-        "TF-IDF": TFIDFFeaturizer(),
-        "Word2Vec": Word2VecFeaturizer()
-    }
-    
+    featurizers = {"TF-IDF": TFIDFFeaturizer(), "Word2Vec": Word2VecFeaturizer()}
+
     all_sent_results = {}
     train_texts = train_df["clean_text"].tolist()
-    val_texts   = val_df["clean_text"].tolist()
+    val_texts = val_df["clean_text"].tolist()
     train_labels = train_df["label"].tolist()
-    val_labels  = val_df["label"].tolist()
+    val_labels = val_df["label"].tolist()
 
     print("\nTraining sentiment classifiers...")
     for feat_name, featurizer in featurizers.items():
         print(f"  -> Extracting features using {feat_name}...")
         X_train = featurizer.fit_transform(train_texts)
-        X_val   = featurizer.transform(val_texts)
+        X_val = featurizer.transform(val_texts)
 
         clf = SentimentClassifier()
         clf.fit(X_train, train_labels)
@@ -110,7 +108,7 @@ def main():
         sent_results = evaluate_sentiment(val_labels, y_pred)
         all_sent_results[feat_name] = sent_results
 
-    # Write Report 
+    # Write Report
     print(f"\nWriting report → {REPORT_FILE}")
     rows = []
 
@@ -125,14 +123,37 @@ def main():
     rows.append(["query", "doc_id", "score", "clean_text"])
     for query, results in ir_results["retrieved"].items():
         for result in results:
-            rows.append([query, result["doc_id"], result["score"], val_index.doc_clean_texts.get(result["doc_id"], "")])
+            rows.append(
+                [
+                    query,
+                    result["doc_id"],
+                    result["score"],
+                    val_index.doc_clean_texts.get(result["doc_id"], ""),
+                ]
+            )
         rows.append(["", "", "", ""])
+
+    # Model comparsion section
+    rows.append(["MODEL COMPARISON", "", "", ""])
+    rows.append(["Model", "MAP", "Avg P@K", "Avg AP", "Queries Used"])
+    for model_name, results in all_ir_results.items():
+        summary = summarize_ir(results)
+        rows.append(
+            [
+                model_name.upper(),
+                results["MAP"],
+                summary["avg_p"],
+                summary["avg_ap"],
+                summary["count"],
+            ]
+        )
+    rows.append(["", "", "", ""])
 
     # Sentiment section
     rows.append(["SENTIMENT EVALUATION (TF-IDF + Logistic Regression)", "", "", ""])
     rows.append(["Metric", "Value", "", ""])
-    rows.append(["Accuracy",  sent_results["accuracy"], "", ""])
-    rows.append(["F1",  sent_results["f1"],  "", ""])
+    rows.append(["Accuracy", sent_results["accuracy"], "", ""])
+    rows.append(["F1", sent_results["f1"], "", ""])
     rows.append(["", "", "", ""])
 
     # Per sample predictions on validation
