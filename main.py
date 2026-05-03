@@ -6,7 +6,7 @@ from src.retrieval.search import SearchEngine
 from src.sentiment.vectorizer import TFIDFFeaturizer, Word2VecFeaturizer
 from src.sentiment.classifier import SentimentClassifier
 from src.evaluate import evaluate_ir, evaluate_sentiment
-
+from src.retrieval.background import label_all
 
 def main():
     # Load Data
@@ -19,14 +19,38 @@ def main():
     print("\nBuilding inverted index...")
     index = indexer.InvertedIndex()
     index.build(train_df)
-    engine = SearchEngine(index)
+    engine = SearchEngine(index, model="bm25")
+
+    # User Query 
+    user_query = input("\nEnter a search query (or 'exit' to quit): ")
+    if user_query.lower() != "exit":
+        retrieved_results = engine.search(user_query, top_k=TOP_K)
+
+        print("\nRetrieved Results:")
+        for i, result in enumerate(retrieved_results, start=1):
+            print(f"{i}. doc_id={result['doc_id']} score={result['score']}")
+            print(result["text"])
+            print()
+
+        query_results_list = [
+            {
+                "query": user_query,
+                "results": retrieved_results,
+            }
+        ]
+        print("Preparing ground truth labels for retrieved results using LLMs")
+        ground_truth = label_all(query_results_list)
+
+        print("Ground Truth Labels:")
+        print(ground_truth)
+      
 
     # IR Evaluation on Validation Set
     print(f"\nRunning IR evaluation (P@{TOP_K}, MAP)...")
     # Use a fixed list of  queries for evaluation (for milestone only)
     val_index = indexer.InvertedIndex()
     val_index.build(val_df)
-    val_engine = SearchEngine(val_index)
+    val_engine = SearchEngine(val_index, model="bm25")
     queries = QUERIES
     ir_results = evaluate_ir(val_index, val_engine.search, queries)
     print(f"MAP = {ir_results['MAP']}")

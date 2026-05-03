@@ -4,9 +4,10 @@ from src.retrieval.models import TFIDFScorer, BM25Scorer, QLScorer
 from src.config import TOP_K
 
 class SearchEngine:
-    def __init__(self, index: InvertedIndex):
-        self.index   = index
-        self.scorer  = TFIDFScorer(index)
+    def __init__(self, index: InvertedIndex, model: str = "tfidf"):
+        self.index = index
+        self.model = model.lower()
+
         if self.model == "bm25":
             self.scorer = BM25Scorer(index)
         elif self.model == "ql":
