@@ -1,12 +1,18 @@
 from src.preprocess import clean_text
 from src.retrieval.indexer import InvertedIndex
-from src.retrieval.models import TFIDFScorer
+from src.retrieval.models import TFIDFScorer, BM25Scorer, QLScorer
 from src.config import TOP_K
 
 class SearchEngine:
     def __init__(self, index: InvertedIndex):
         self.index   = index
         self.scorer  = TFIDFScorer(index)
+        if self.model == "bm25":
+            self.scorer = BM25Scorer(index)
+        elif self.model == "ql":
+            self.scorer = QLScorer(index)
+        else:
+            self.scorer = TFIDFScorer(index)
 
     def search(self, query: str, top_k: int = TOP_K) -> list[dict]:
         """

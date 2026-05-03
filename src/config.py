@@ -54,3 +54,10 @@ QUERIES = [
     "apple iphone battery",
     "netflix recommendations"
 ]
+
+# BM25 Settings
+BM25_K1 = 1.2
+BM25_B  = 0.75
+
+# Query Likelihood Settings (Dirichlet Smoothing)
+QL_MU = 1000

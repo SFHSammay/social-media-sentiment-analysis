@@ -3,7 +3,7 @@ from src.config import REPORT_FILE, TOP_K, QUERIES
 from src.preprocess import get_train_df, get_val_df
 import src.retrieval.indexer as indexer
 from src.retrieval.search import SearchEngine
-from src.sentiment.vectorizer import TFIDFFeaturizer
+from src.sentiment.vectorizer import TFIDFFeaturizer, Word2VecFeaturizer
 from src.sentiment.classifier import SentimentClassifier
 from src.evaluate import evaluate_ir, evaluate_sentiment
 
@@ -32,6 +32,17 @@ def main():
     print(f"MAP = {ir_results['MAP']}")
     for row in ir_results["per_query"][:]:
         print(f"{row['query']:35s} P@{TOP_K}={row['P@K']:.4f}  AP={row['AP']:.4f}")
+    
+    ir_models = ["tfidf", "bm25", "ql"]
+    all_ir_results = {}
+    
+    print(f"\nRunning IR evaluation (P@{TOP_K}, MAP)...")
+    for model_name in ir_models:
+        # We pass the dynamic model name into the engine
+        engine = SearchEngine(val_index, model=model_name)
+        results = evaluate_ir(val_index, engine.search, QUERIES)
+        all_ir_results[model_name] = results
+        print(f"Model: {model_name.upper():6s} | MAP: {results['MAP']:.4f}")
 
     # Sentiment: Train on training set, evaluate on validation set 
     print("\nTraining sentiment classifier (TF-IDF + Logistic Regression)...")
@@ -50,6 +61,30 @@ def main():
     print(f"F1  = {sent_results['f1']}")
     print("\nClassification Report:")
     print(sent_results["report"])
+
+    featurizers = {
+        "TF-IDF": TFIDFFeaturizer(),
+        "Word2Vec": Word2VecFeaturizer()
+    }
+    
+    all_sent_results = {}
+    train_texts = train_df["clean_text"].tolist()
+    val_texts   = val_df["clean_text"].tolist()
+    train_labels = train_df["label"].tolist()
+    val_labels  = val_df["label"].tolist()
+
+    print("\nTraining sentiment classifiers...")
+    for feat_name, featurizer in featurizers.items():
+        print(f"  -> Extracting features using {feat_name}...")
+        X_train = featurizer.fit_transform(train_texts)
+        X_val   = featurizer.transform(val_texts)
+
+        clf = SentimentClassifier()
+        clf.fit(X_train, train_labels)
+
+        y_pred = clf.predict(X_val)
+        sent_results = evaluate_sentiment(val_labels, y_pred)
+        all_sent_results[feat_name] = sent_results
 
     # Write Report 
     print(f"\nWriting report → {REPORT_FILE}")

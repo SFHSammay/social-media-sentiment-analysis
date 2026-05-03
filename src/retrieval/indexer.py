@@ -15,6 +15,8 @@ class InvertedIndex:
         self.doc_clean_texts: dict[int, str] = {}   # doc_id -> cleaned text
         self.doc_labels: dict[int, int]  = {}       # doc_id -> sentiment label
         self.N = 0                                  # total documents
+        self.collection_length = 0                  # total tokens in corpus
+        self.term_cf: dict[str, int] = defaultdict(int) # term -> total corpus frequency
 
     def build(self, df: pd.DataFrame):
         for _, row in df.iterrows():
@@ -24,8 +26,10 @@ class InvertedIndex:
             self.doc_clean_texts[doc_id] = str(row["clean_text"])
             self.doc_labels[doc_id]   = int(row["label"])
             self.doc_lengths[doc_id]  = len(tokens)
+            self.collection_length += len(tokens)
             for token in tokens:
                 self.index[token][doc_id] += 1
+                self.term_cf[token] += 1
         self.N = len(self.doc_lengths)
         print(f"Index built: {self.N} docs, {len(self.index)} unique terms")
 
