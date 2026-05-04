@@ -17,10 +17,11 @@ The current state focuses on the final state of the full pipeline, including dat
 data acquisition (Kaggle Twitter Dataset)  
 → preprocessing  
 → inverted index  
-→ retrieval (TF-IDF, BM25, QL)
-→ top-k documents   
-→ retrieval evaluation (Precision@k, AP, MAP) with a heuristic relevance rule  
-→ retrieval evaluation (Precision@k, MAP)
+→ retrieval (TF-IDF, BM25, QL+JM Smoothing, QL+DP Smoothing)  
+→ top-k documents for each model  
+→ pooled retreived documents  
+→ ground truth relevance labeling (Gemma, Gemini)  
+→ retrieval evaluation (Precision@k, AP, MAP)  
 → sentiment analysis (TF-IDF + Logistic Regression)  
 → sentiment evaluation (Accuracy, F1)
 → comparison  
