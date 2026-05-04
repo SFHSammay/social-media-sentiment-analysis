@@ -7,25 +7,20 @@ This project proposes a social media sentiment analysis system that classifies p
 
 We first retrieve relevant posts using information retrieval (IR) models, and then analyze their sentiments.
 
-## Pipeline
-data acquisition  
-→ preprocessing  
-→ inverted index  
-→ retrieval (TF-IDF, BM25, QL)   
-→ top-k documents   
-→ retrieval evaluation (Precision@k, MAP)  
-→ sentiment analysis (TF-IDF / Word2Vec → model → prediction)  
-→ sentiment evaluation (Accuracy, F1)  
-→ comparison  
+## How to run
+In order to run this project successfully, please have a Google Gemini API key defined in your path (with the variable name as GEMINI_API_KEY) before attempting to run. Execute the main.py file in order to run this project.
 
-## Milestone Progress
-The milestone focuses on the early stages of the full pipeline, including data acquisition, preprocessing, and a baseline sentiment analysis component.
+## Final Project State
+The current state focuses on the final state of the full pipeline, including data acquisition, preprocessing, and a baseline sentiment analysis component, comparison, etc.
 
-## Current implementation
+## Final implementation
 data acquisition (Kaggle Twitter Dataset)  
 → preprocessing  
 → inverted index  
-→ retrieval (TF-IDF)  
+→ retrieval (TF-IDF, BM25, QL)
+→ top-k documents   
 → retrieval evaluation (Precision@k, AP, MAP) with a heuristic relevance rule  
+→ retrieval evaluation (Precision@k, MAP)
 → sentiment analysis (TF-IDF + Logistic Regression)  
 → sentiment evaluation (Accuracy, F1)
+→ comparison  
