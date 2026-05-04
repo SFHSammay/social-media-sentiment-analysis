@@ -1,11 +1,19 @@
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 from gensim.models import Word2Vec
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 from src.config import (
-    TFIDF_MAX_FEAT, TFIDF_NGRAM,
-    W2V_VECTOR_SIZE, W2V_WINDOW, W2V_MIN_COUNT, W2V_EPOCHS, W2V_WORKERS
+    TFIDF_MAX_FEAT,
+    TFIDF_NGRAM,
+    W2V_EPOCHS,
+    W2V_MIN_COUNT,
+    W2V_VECTOR_SIZE,
+    W2V_WINDOW,
+    W2V_WORKERS,
 )
 
+
+# Featurizers for converting text to numerical representations
 class TFIDFFeaturizer:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(
@@ -20,8 +28,9 @@ class TFIDFFeaturizer:
     def transform(self, texts: list[str]):
         return self.vectorizer.transform(texts)
 
+
+# Featurizer for converting text using Word2Vec
 class Word2VecFeaturizer:
-    """Trains a Word2Vec model on the corpus and averages word vectors per tweet."""
     def __init__(self):
         self.model = None
         self.vector_size = W2V_VECTOR_SIZE
